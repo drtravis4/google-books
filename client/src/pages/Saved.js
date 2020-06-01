@@ -1,102 +1,61 @@
-import React from 'react';
-import Container from 'react-bootstrap/Container';
-import Row from 'react-bootstrap/Row';
-import Col from 'react-bootstrap/Col';
-import Card from 'react-bootstrap/Card';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import API from '../utils/API';
-import Header from '../components/Header';
-import BookList from '../components/BookList';
+import React, { Component } from "react";
+import API from "../utils/API";
+import { Container, Row, Col } from "../components/Grid";
+import { BookList, BookListItem } from "../components/List";
 
-/**
- * Displays the page for the `/saved` route. List's all saved books
- * in the database.
- */
-class SavedPage extends React.Component {
-  constructor(props) {
-    super(props);
+class Save extends Component {
 
-    this.loadBooks = this.loadBooks.bind(this);
-    this.handleBookAction = this.handleBookAction.bind(this);
-
-    this.state = {
-      pageTag: 'Your Saved Books of Interest',
-      action: 'delete',
-      books: []
+    // instantiate state for saved books
+    state = {
+        savedBooks: []
     };
-  }
 
-  /**
-   * On successful rendering of the page, get all saved books from the
-   * backend.
-   */
-  componentDidMount() {
-    this.loadBooks();
-  }
+    // loads saved books when Saved page loads
+    componentDidMount() {
+        this.loadBooks();
+    };
 
-  /**
-   * Send a call to the backend to get all saved books, and store the
-   * results in state.
-   */
-  loadBooks() {
-    API.getSavedBooks()
-      .then((res) => {
-        const bookList = res.data;
+    // loads books from database
+    loadBooks = event => {
 
-        this.setState({ books: bookList });
-      })
-      .catch((error) => console.log(error));
-  }
+        API.getBooks()
+            .then(res => {
+                this.setState({ savedBooks: res.data }, function () {
+                    console.log(this.state.savedBooks);
+                })
+            })
+            .catch(err => console.log(err))
+    };
 
-  /**
-   * Handle the removal of a book from the backend datastore.
-   *
-   * @param {*} id The mongoDB _id to use for removing a book.
-   */
-  handleBookAction(id) {
-    API.deleteBook(id)
-      .then(() => this.loadBooks())
-      .catch((error) => console.log(error));
-  }
+    render() {
+        return (
+            <div>
+                <Container>
+                    <Row>
+                        <Col size="xs-12">
+                            <BookList>
+                                {this.state.savedBooks.map(book => {
+                                    return (
+                                        <BookListItem
+                                            key={book._id}
+                                            title={book.title}
+                                            authors={book.authors}
+                                            link={book.link}
+                                            description={book.description}
+                                            image={book.image}
+                                            id={book._id}
+                                            loadBooks={this.loadBooks}
+                                        />
+                                    );
+                                })}
+                            </BookList>
+                        </Col>
+                    </Row>
+                </Container>
+            </div>
+        );
+    };
 
-  /**
-   * Render the page elements.
-   */
-  render() {
-    return (
-      <Container>
-        <Row>
-          <Col md={12}>
-            <Header pageTag={this.state.pageTag} />
-          </Col>
-        </Row>
-        <Row>
-          <Col md={12}>
-            <Card className="mt-4 shadow">
-              <Card.Header className="border-bottom-0 bg-primary text-white">
-                <h3>
-                  <strong>
-                    <FontAwesomeIcon icon="download" /> Saved Books
-                  </strong>
-                </h3>
-              </Card.Header>
-              <Card.Body>
-                {!this.state.books.length ? (
-                  <h2 className="text-center">No Saved Books</h2>
-                ) : (
-                  <BookList
-                    books={this.state.books}
-                    handleBookAction={this.handleBookAction}
-                    action={this.state.action}
-                  />
-                )}
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
-      </Container>
-    );
-  }
-}
+};
 
-export default SavedPage;
+export default Save;
